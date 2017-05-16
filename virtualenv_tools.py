@@ -54,6 +54,9 @@ def update_activation_script(script_filename, new_path):
 
 def update_script(script_filename, new_path):
     """Updates shebang lines for actual scripts."""
+    if os.path.isdir(script_filename):
+        return
+
     with open(script_filename) as f:
         lines = list(f)
     if not lines:
@@ -61,20 +64,25 @@ def update_script(script_filename, new_path):
 
     if not lines[0].startswith('#!'):
         return
-    args = lines[0][2:].strip().split()
-    if not args:
+
+    file_args = lines[0][2:].strip().split()
+    if not file_args:
         return
 
-    if not args[0].endswith('/bin/python') or \
-       '/usr/bin/env python' in args[0]:
+    if not (file_args[0].endswith('/bin/python') or \
+            file_args[0].endswith('/bin/python3.5') or \
+            file_args[0].endswith('/bin/python3.6')) or \
+       '/usr/bin/env python' in file_args[0]:
         return
 
-    new_bin = os.path.join(new_path, 'bin', 'python')
-    if new_bin == args[0]:
+    python_name = file_args[0].split('/')[-1]
+
+    new_bin = os.path.join(new_path, 'bin', python_name)
+    if new_bin == file_args[0]:
         return
 
-    args[0] = new_bin
-    lines[0] = '#!%s\n' % ' '.join(args)
+    file_args[0] = new_bin
+    lines[0] = '#!%s\n' % ' '.join(file_args)
     print 'S %s' % script_filename
     with open(script_filename, 'w') as f:
         f.writelines(lines)
